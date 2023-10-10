@@ -40,7 +40,7 @@ class RobotEKF(RobotBase):
 		self.e_Q     = kwargs.get('e_Q', 0.2) # Noise amplitude of ekf estimation measurement model
 		r""" FOR EKF ESTIMATION ENDS """
 
-# Todo1:
+# Todo1: --complished
 	def dynamics(self, state, vel, **kwargs):
 		r"""
 		Question 1
@@ -68,7 +68,7 @@ class RobotEKF(RobotBase):
 		"*** YOUR CODE STARTS HERE ***"
 		vel1 = vel[0][0]
 		vel2 = vel[1][0]
-		print(vel2)
+		# print(vel2)
 		x1, y1, theta1 = state
 		xt = x1+vel1*np.cos(theta1)*dt
 		yt = y1+vel1*np.sin(theta1)*dt
@@ -81,7 +81,7 @@ class RobotEKF(RobotBase):
 		return next_state
 
 
-# Todo2:
+# Todo2: --complished
 	def ekf_predict(self, vel, **kwargs):
 		r"""
 		Question 2
@@ -105,15 +105,28 @@ class RobotEKF(RobotBase):
 		
 		"*** YOUR CODE STARTS HERE ***"
 		# Compute the Jacobian of g called G with respect to the state
-		
-
+		vel1 = vel[0][0]
+		vel2 = vel[1][0]
+		# print(vel2)
+		x1, y1, theta1 = mu
+		xt = x1+vel1*np.cos(theta1)*dt
+		yt = y1+vel1*np.sin(theta1)*dt
+		thetat = theta1+vel2*dt
+		g = [xt, yt, thetat]
+		g = np.array(g)
+		G = np.zeros((3, 3))
+		G[0, 0] = 1
+		G[0, 2] = -vel1*np.sin(theta1)*dt
+		G[1, 1] = 1
+		G[1, 2] = vel1*np.cos(theta1)*dt
+		G[2, 2] = 1
 
 		# Compute the mean 
-		
+		mu_bar = g
 
 
 		# Compute the covariance matrix
-		
+		sigma_bar = np.dot(np.dot(G, sigma), G.T)+R
 
 		"*** YOUR CODE ENDS HERE ***"
 		self.e_state['mean'] = mu_bar
@@ -156,9 +169,11 @@ class RobotEKF(RobotBase):
 		for lm in lm_measurements:
 			# Update mu_bar and sigma_bar with each measurement individually,
 			"*** YOUR CODE STARTS HERE ***"
-			
+			xt = mu_bar[0,0]
+			yt = mu_bar[1,0]
+			thetat = mu_bar[2, 0]
 			# Calculate the expected measurement vector
-			
+			hx = np.sqrt((4))
 
 
 			# Compute H
