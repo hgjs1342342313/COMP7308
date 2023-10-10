@@ -172,21 +172,37 @@ class RobotEKF(RobotBase):
 			xt = mu_bar[0,0]
 			yt = mu_bar[1,0]
 			thetat = mu_bar[2, 0]
+			landmark = lm_map[lm['id']]
+			lx = landmark[0,0]
+			ly = landmark[1,0]
 			# Calculate the expected measurement vector
-			hx = np.sqrt((4))
-
-
+			h = np.sqrt((xt-lx)**2+(yt-ly)**2)
+			h = np.array(h)
 			# Compute H
-			
-
+			q = (lx-xt)**2+(ly-yt)**2
+			H = np.zeros((1, 3))
+			H[0, 0] = -(lx-xt)/np.sqrt(q)
+			H[0, 1] = -(ly-yt)/np.sqrt(q)
 
 			# Gain of Kalman
-			
+			S = np.dot(np.dot(H, sigma_bar), H.T)+Q
+			K = np.dot(np.dot(sigma_bar, H.T), np.linalg.inv(S))
 
 
 			# Kalman correction for mean_bar and covariance_bar
-			
-
+			# print(lm['range'])
+			_range = lm['range']
+			# _theta = lm['angle']
+			zt = np.array([_range]).T
+			# print(h)
+			# print(zt)
+			# print("np.dot(K, zt-h) is ", np.dot(K, (zt-h)))
+			foo = np.dot(K, (zt - h))
+			foo = foo.T
+			foo = np.reshape(foo, (3, 1))
+			mu_bar = mu_bar + foo
+			I = np.eye(3)
+			sigma_bar = np.dot((I - np.dot(K, H)), sigma_bar)
 
 			"*** YOUR CODE ENDS HERE ***"
 			pass
