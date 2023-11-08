@@ -165,16 +165,41 @@ class RobotFastSLAM(RobotBase):
 					# Initialise mean and covariance of landmark lm_id
 					"*** YOUR CODE STARTS HERE ***"
 					# Initialise mean, at line 7
-					
+					s = particle.state
+					m = np.zeros((2,1))
+					r = lm['range']
+					angle = lm['angle']
 
+					xt = s[0,0]
+					yt = s[1,0]
+					thetat = s[2, 0]
+					m[0, 0] = r*np.cos(angle+thetat)
+					m[1, 0] = r*np.sin(angle+thetat)
+
+					lx = m[0, 0]
+					ly = m[1, 0]
+					# particle.landmarks[lm_id]['mean'] =  m
+					particle.landmarks[lm_id]['mean'] = copy.deepcopy(m)
+					
+					h1 = np.sqrt((xt-lx)**2+(yt-ly)**2)
+					h2 = np.arctan2((ly-yt),(lx-xt))-thetat
+					h2 = WrapToPi(h2)
+					h = np.zeros((2,1))
+					h[0, 0]=h1
+					h[1, 0]=h2
 
 					# Calculate Jacobian related to landmark, at line 8
-					
+					# Compute H
+					q = (lx-xt)**2+(ly-yt)**2
+					H = np.zeros((2, 2))
+					H[0, 0] = -(lx-xt)/np.sqrt(q)
+					H[0, 1] = -(ly-yt)/np.sqrt(q)
+					H[1, 0] = (ly-yt)/q
+					H[1, 1] = -(lx-xt)/q
 
 
 					# Initialise corvariance, at line 9
-					
-
+					particle.landmarks[lm_id]['std'] = np.dot(np.dot(np.linalg.inv(H), Q_t), np.linalg.inv(H).T)
 
 					# Remain default importance weight (skip), at line 10
 					"*** YOUR CODE ENDS HERE ***"
@@ -189,25 +214,19 @@ class RobotFastSLAM(RobotBase):
 					# Measurement prediction, at line 12
 					
 
-
 					# Calculate Jacobian, at line 13
 					
 
 					# Measurement covariance, at line 14
 
-
 					# Calculate Kalman gain, at line 15
-
 
 					# Update mean, at line 16
 
-
 					# Update covariance, at line 17
-					
 
 					# Calculate importance factor w, at line 18
 					w = 1 # Rewrite this line or update w after
-					
 
 					"*** YOUR CODE ENDS HERE ***"
 					particle.weight *= w
