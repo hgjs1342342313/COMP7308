@@ -166,20 +166,19 @@ class RobotFastSLAM(RobotBase):
 					"*** YOUR CODE STARTS HERE ***"
 					# Initialise mean, at line 7
 					s = particle.state
-					m = np.zeros((2,1))
+					mu_bar = np.zeros((2,1))
 					r = lm['range']
 					angle = lm['angle']
-
 					xt = s[0,0]
 					yt = s[1,0]
 					thetat = s[2, 0]
-					m[0, 0] = r*np.cos(angle+thetat)
-					m[1, 0] = r*np.sin(angle+thetat)
+					mu_bar[0, 0] = r*np.cos(angle+thetat)+xt
+					mu_bar[1, 0] = r*np.sin(angle+thetat)+yt
 
-					lx = m[0, 0]
-					ly = m[1, 0]
+					lx = mu_bar[0, 0]
+					ly = mu_bar[1, 0]
 					# particle.landmarks[lm_id]['mean'] =  m
-					particle.landmarks[lm_id]['mean'] = copy.deepcopy(m)
+					particle.landmarks[lm_id]['mean'] = mu_bar
 					
 					h1 = np.sqrt((xt-lx)**2+(yt-ly)**2)
 					h2 = np.arctan2((ly-yt),(lx-xt))-thetat
@@ -192,15 +191,15 @@ class RobotFastSLAM(RobotBase):
 					# Compute H
 					q = (lx-xt)**2+(ly-yt)**2
 					H = np.zeros((2, 2))
-					H[0, 0] = -(lx-xt)/np.sqrt(q)
-					H[0, 1] = -(ly-yt)/np.sqrt(q)
-					H[1, 0] = (ly-yt)/q
-					H[1, 1] = -(lx-xt)/q
+					H[0, 0] = (lx-xt)/np.sqrt(q)
+					H[0, 1] = (ly-yt)/np.sqrt(q)
+					H[1, 0] = -(ly-yt)/q
+					H[1, 1] = (lx-xt)/q
 
 
 					# Initialise corvariance, at line 9
 					particle.landmarks[lm_id]['std'] = np.dot(np.dot(np.linalg.inv(H), Q_t), np.linalg.inv(H).T)
-
+					# print(particle.landmarks[lm_id]['std'].shape)
 					# Remain default importance weight (skip), at line 10
 					"*** YOUR CODE ENDS HERE ***"
 					particle.landmarks[lm_id]['observed'] = True
@@ -212,22 +211,49 @@ class RobotFastSLAM(RobotBase):
 					# and update importance weight
 					"*** YOUR CODE STARTS HERE ***"
 					# Measurement prediction, at line 12
-					
+					# z_bar = h
+					landmark = particle.landmarks[lm_id]['mean']
+					lcov = particle.landmarks[lm_id]['std']
+					mu_bar = particle.state
+					xt = mu_bar[0,0]
+					yt = mu_bar[1,0]
+					thetat = mu_bar[2, 0]
+					lx = landmark[0,0]
+					ly = landmark[1,0]
+					h1 = np.sqrt((xt-lx)**2+(yt-ly)**2)
+					h2 = np.arctan2((ly-yt),(lx-xt))-thetat
+					h2 = WrapToPi(h2)
+					h = np.zeros((2,1))
+					h[0, 0]=h1
+					h[1, 0]=h2
 
 					# Calculate Jacobian, at line 13
-					
-
+					q = (lx-xt)**2+(ly-yt)**2
+					H = np.zeros((2, 2))
+					H[0, 0] = (lx-xt)/np.sqrt(q)
+					H[0, 1] = (ly-yt)/np.sqrt(q)
+					H[1, 0] = -(ly-yt)/q
+					H[1, 1] = (lx-xt)/q
 					# Measurement covariance, at line 14
-
+					Q = np.dot(np.dot(H, lcov), H.T)+Q_t
 					# Calculate Kalman gain, at line 15
-
+					K = np.dot(np.dot(lcov,H.T), np.linalg.inv(Q))
 					# Update mean, at line 16
-
+					zt = np.zeros((2,1))
+					zt[0, 0] = lm['range']
+					zt[1, 0] = lm['angle']
+					particle.landmarks[lm_id]['mean'] = landmark + np.dot(K, (zt-h))
 					# Update covariance, at line 17
-
+					foo = np.dot(K, H)
+					# print("foo is ", foo.shape)
+					I = np.eye(2)
+					fooo = I-foo
+					particle.landmarks[lm_id]['std'] = np.dot(fooo, lcov)
 					# Calculate importance factor w, at line 18
-					w = 1 # Rewrite this line or update w after
-
+					# w = 1 # Rewrite this line or update w after
+					w = np.power((np.linalg.det(2*np.pi* Q)), -1/2) * np.exp(-1/2* np.dot(np.dot((zt-h).T, np.linalg.inv(Q)), (zt-h)))
+					# w=1
+					# print(w.shape)
 					"*** YOUR CODE ENDS HERE ***"
 					particle.weight *= w
 					pass
@@ -275,7 +301,15 @@ class RobotFastSLAM(RobotBase):
 		# Here you should:
 		# Check whether the resampling requirement is met,
 		# Assign the result to 'requirement'.
-		
+		M = self.num_particle
+		D = 1.5
+		md = M/D
+		w = 0
+		for particle in self.particles:
+			w += particle.weight**2
+		w = 1/w
+		if w < md:
+			requirement = True
 
 		"*** YOUR CODE ENDS HERE ***"
 
@@ -286,7 +320,7 @@ class RobotFastSLAM(RobotBase):
 			r = self.resample_rng.uniform(0, step) # random start of first target position, at line 3
 			c = self.particles[0].weight 		 # current accumulated weight position, at line 4
 			i = 0 								 # current particle's id, at line 5
-			
+			# for m = 1 to M do: (j = m)
 			for j in range(self.num_particle):
 				"*** YOUR CODE STARTS HERE ***"
 				# Here you should:
@@ -294,14 +328,18 @@ class RobotFastSLAM(RobotBase):
 				# and add it to 'new_particles'.
 
 				# Find the id of the new particle, at line 7-10
-				
+				U = r+(j)*step
+				while U>c:
+					i+=1
+					c+=self.particles[i].weight
 
 
 				# At line 12
 				# Copy the old particle and add it to 'new_particles'
 				# using copy.deepcopy(old_particle) (example).
 				# You should change the weight to the default weight.
-				
+				new_particles.append(copy.deepcopy(self.particles[i]))
+				new_particles[-1].weight = 1/self.num_particle
 
 				
 				"*** YOUR CODE ENDS HERE ***"
