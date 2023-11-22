@@ -151,7 +151,19 @@ class RobotRRT(RobotBase):
 		expand_dis = self.p_expand_dis
 		x_new = None
 		"*** YOUR CODE STARTS HERE ***"
-		
+		near_x = x_nearest[0,0]
+		near_y = x_nearest[1,0]
+		rand_x = x_rand[0, 0]
+		rand_y = x_rand[1, 0]
+		real_dis = math.sqrt((near_x-rand_x)**2+(near_y-rand_y)**2)
+		ratio = expand_dis/real_dis
+		diff_x = rand_x-near_x
+		diff_y = rand_y-near_y
+		new_x = near_x+ratio*diff_x
+		new_y = near_y+ratio*diff_y
+		x_new = np.zeros((2,1))
+		x_new[0,0]=new_x
+		x_new[1,0]=new_y
 
 		"*** YOUR CODE ENDS HERE ***"
 		return x_new
