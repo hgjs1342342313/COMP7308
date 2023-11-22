@@ -295,6 +295,8 @@ class RobotRRT(RobotBase):
 					# Here Question 1(c) starts
 
 					# Line 7, save the new node to our list
+					new_node = [x_new, index_nearest]
+					self.nodes.append(new_node)
 					
 
 					"*** YOUR CODE ENDS HERE ***"
