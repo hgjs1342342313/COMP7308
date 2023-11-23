@@ -249,7 +249,6 @@ class RobotRRT(RobotBase):
 			if distanc < r:
 				satisfied_node = [node, i]
 				node_near_list.append(satisfied_node)
-
 		"*** YOUR CODE ENDS HERE ***"
 
 		return node_near_list
@@ -304,37 +303,48 @@ class RobotRRT(RobotBase):
 				if self.p_mode == 'rrt':
 					"*** YOUR CODE STARTS HERE ***"
 					# Here Question 1(c) starts
-
 					# Line 7, save the new node to our list
 					new_node = [x_new, index_nearest]
 					self.nodes.append(new_node)
-
-
 					"*** YOUR CODE ENDS HERE ***"
-
 				elif self.p_mode == 'rrt_star':
 					"*** YOUR CODE STARTS HERE ***"
 					# Here Question 2(b) starts
-
 					# Line 7, find nodes near new node with state x_new,
 					# get a list saving these nodes and their indexes
-					
-
-
+					Xnear = self.rrt_near(x_new)
 					# Line 9-12, loop from the list, find node with
 					# the minimum path cost, get its index as well
-					
-
-
+					xmin = x_nearest
+					imin = index_nearest
+					cmin = self.nodes[index_nearest][2]+self.rrt_cost(x_nearest, x_new)
+					# lin9 上面没问题
+					for item in Xnear:
+						x_node = item[0] # 一个node
+						x_ind = item[1] # node的自己的index
+						# glob_x_ind = x_node[1] parent的index
+						x_near = x_node[0] # node的state
+						if self.rrt_collision_free(x_near, x_new) and self.nodes[x_ind][2] + self.rrt_cost(x_near, x_new) < cmin:
+							xmin = x_near
+							imin = x_ind
+							cmin = self.nodes[x_ind][2] + self.rrt_cost(x_near, x_new)
 
 					# Line 8 and 13, save the new node to our rrt_star tree
 					# with form [state, parent_node_index, path_cost]
-					
+					new_node = [x_new, imin, cmin]
+					self.nodes.append(new_node)
+					new_node_index = len(self.nodes)-1
 
 					# Line 14-16, loop from the list, check whether these nodes
 					# can get a shorter path cost when they connect to our new node
 					# If so, update their connection and the cost.
-					
+					for item in Xnear:
+						x_node = item[0] # 一个node
+						x_ind = item[1] # node的自己的index
+						# glob_x_ind = x_node[1] parent的index
+						x_near = x_node[0] # node的state
+						if self.rrt_collision_free(x_new, x_near) and cmin + self.rrt_cost(x_new, x_near) < self.nodes[x_ind][2]:
+							x_node[1] = new_node_index
 
 					"*** YOUR CODE ENDS HERE ***"
 
