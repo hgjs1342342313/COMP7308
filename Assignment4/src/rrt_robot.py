@@ -343,8 +343,10 @@ class RobotRRT(RobotBase):
 						x_ind = item[1] # node的自己的index
 						# glob_x_ind = x_node[1] parent的index
 						x_near = x_node[0] # node的state
-						if self.rrt_collision_free(x_new, x_near) and cmin + self.rrt_cost(x_new, x_near) < self.nodes[x_ind][2]:
-							x_node[1] = new_node_index
+						tdistan = cmin + self.rrt_cost(x_new, x_near)
+						if self.rrt_collision_free(x_new, x_near) and  tdistan < self.nodes[x_ind][2]:
+							self.nodes[x_ind][1] = new_node_index
+							self.nodes[x_ind][2] = tdistan
 
 					"*** YOUR CODE ENDS HERE ***"
 
