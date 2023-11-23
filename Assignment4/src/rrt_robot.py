@@ -234,10 +234,21 @@ class RobotRRT(RobotBase):
 		node_near_list = []
 		"*** YOUR CODE STARTS HERE ***"
 		# Calculate r 
-		
-
+		card = len(self.nodes)
+		foo = math.log(card)/card
+		foo = foo ** (1/d)
+		foo = foo*gamma
+		r = min(foo, eta)
+		x = x_target[0,0]
+		y = x_target[1, 0]
 		# Loop within tree to find all satisfiable node
-		
+		for i, node in enumerate(self.nodes):
+			x_new = node[0][0,0]
+			y_new = node[0][1,0]
+			distanc = math.sqrt((x-x_new)**2+(y-y_new)**2)
+			if distanc < r:
+				satisfied_node = [node, i]
+				node_near_list.append(satisfied_node)
 
 		"*** YOUR CODE ENDS HERE ***"
 
@@ -297,7 +308,7 @@ class RobotRRT(RobotBase):
 					# Line 7, save the new node to our list
 					new_node = [x_new, index_nearest]
 					self.nodes.append(new_node)
-					
+
 
 					"*** YOUR CODE ENDS HERE ***"
 
